@@ -1,0 +1,42 @@
+#Import packages
+from PIL import Image
+from skimage.feature import graycomatrix, graycoprops
+import numpy as np
+%matplotlib inline 
+from matplotlib import pyplot as plt
+
+#Remove image size limit
+Image.MAX_IMAGE_PIXELS = None
+
+#define image file path
+filePath = r"C:\Users\danph\OneDrive\Desktop\GEOM 2073 - Dissertation\Data\SampleData\SampleData\ForsythNorth_April2021_Aerial_RGB.tif"
+#convert image to greyscale and ndarray
+img  = np.array(Image.open(filePath).convert("L"))
+
+#Define smaller test array for code dev
+img = (img[0:400,0:400])
+
+#define window size
+window_size = (9,9)
+h = window_size[0]
+w = window_size[1]
+
+#Create empty output array
+outImg = [[ None for i in range(img.shape[1]-(h-1))] for j in range(img.shape[0]-(h-1))]
+
+#Sliding window loop across image
+for y in range(0, img.shape[0],1):
+    for x in range(0, img.shape[1],1):
+        window = img[y:y+h, x:x+w]
+        # if window is below the minimum window size, ignore it
+        if window.shape[:2] != window_size:
+            continue
+        #calculate glcm and texture for window    
+        glcm = graycomatrix(window, distances=[(h-1)/2], angles=[0], levels=256, symmetric=True)
+        correlation = graycoprops(glcm, 'correlation')
+        #insert correlation into output image
+        outImg[y][x] = correlation[0][0]
+        
+#plot and display texture image        
+plt.imshow(outImg, interpolation='nearest')
+plt.show()
